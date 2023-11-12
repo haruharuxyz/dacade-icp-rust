@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "canisters": {
+    "song_manage": {
+      "type": "rust",
+      "package": "song_manage",
+      "candid": "src/song_manage/song_manage.did"
+    }
+  },
+  "output_env_file": ".env"
+}
