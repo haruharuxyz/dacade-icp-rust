@@ -2,8 +2,15 @@ type Error = variant {
   NotFound : record { msg : text };
   UploadFail : record { msg : text };
   UpdateFail : record { msg : text };
+  InvalidInput : record { msg : text };
+  AccessDenied : record { msg : text };
 };
-type Result = variant { Ok : Song; Err : Error };
+
+type Result = variant {
+  Ok : Song;
+  Err : Error
+};
+
 type Song = record {
   id : nat64;
   title : text;
@@ -15,6 +22,7 @@ type Song = record {
   genre : text;
   singer : text;
 };
+
 type SongPayload = record {
   title : text;
   duration : nat64;
@@ -24,6 +32,7 @@ type SongPayload = record {
   genre : text;
   singer : text;
 };
+
 service : {
   delete_song : (nat64) -> (Result);
   get_song : (nat64) -> (Result) query;
@@ -35,4 +44,53 @@ service : {
   update_song_release_date : (nat64, text) -> (Result);
   update_song_title : (nat64, text) -> (Result);
   upload_song : (SongPayload) -> (Result);
-}
+
+  // Improved Error Handling
+  delete_song = fun (song_id : nat64) : Result {
+    let song = getSongById(song_id);
+    if (!exists(song)) {
+      return Err(NotFound { msg = "Song with ID " ++ string(song_id) ++ " not found" });
+    }
+    removeSong(song);
+    return Ok(song);
+  };
+
+  // Refactored Update Functions
+  update_song = fun (song_id : nat64, song_data : SongPayload) : Result {
+    let song = getSongById(song_id);
+    if (!exists(song)) {
+      return Err(NotFound { msg = "Song with ID " ++ string(song_id) ++ " not found" });
+    }
+
+    let updated_song = {
+      id = song.id,
+      title = if (song_data.title) { song_data.title } else { song.title },
+      duration = if (song_data.duration) { song_data.duration } else { song.duration },
+      release_date = if (song_data.release_date) { song_data.release_date } else { song.release_date },
+      mime_type = if (song_data.mime_type) { song_data.mime_type } else { song.mime_type },
+      file_name = if (song_data.file_name) { song_data.file_name } else { song.file_name },
+      genre = if (song_data.genre) { song_data.genre } else { song.genre },
+      singer = if (song_data.singer) { song_data.singer } else { song.singer },
+    };
+
+    updateSong(updated_song);
+    return Ok(updated_song);
+  };
+
+  // Input Validation
+  update_song_duration = fun (song_id : nat64, new_duration : nat64) : Result {
+    if (new_duration < 0) {
+      return Err(InvalidInput { msg = "Duration cannot be negative" });
+    }
+
+    let song = getSongById(song_id);
+    if (!exists(song)) {
+      return Err(NotFound { msg = "Song with ID " ++ string(song_id) ++ " not found" });
+    }
+
+    updateSongDuration(song_id, new_duration);
+    return Ok(song);
+  };
+
+  update_song_file_name = fun (song_id : nat64, new_file_name : text) : Result {
+    // Validate file name
