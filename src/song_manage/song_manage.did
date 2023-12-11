@@ -1,5 +1,7 @@
 type Error = variant {
+  ValidationFail : record { content : text };
   NotFound : record { msg : text };
+  NotOwner : record { msg : text };
   UploadFail : record { msg : text };
   UpdateFail : record { msg : text };
 };
@@ -10,6 +12,7 @@ type Song = record {
   updated_at : opt nat64;
   duration : nat64;
   release_date : text;
+  owner : text;
   mime_type : text;
   file_name : text;
   genre : text;
@@ -28,11 +31,5 @@ service : {
   delete_song : (nat64) -> (Result);
   get_song : (nat64) -> (Result) query;
   update_song : (nat64, SongPayload) -> (Result);
-  update_song_duration : (nat64, nat64) -> (Result);
-  update_song_file_name : (nat64, text) -> (Result);
-  update_song_genre : (nat64, text) -> (Result);
-  update_song_mime_type : (nat64, text) -> (Result);
-  update_song_release_date : (nat64, text) -> (Result);
-  update_song_title : (nat64, text) -> (Result);
   upload_song : (SongPayload) -> (Result);
 }
